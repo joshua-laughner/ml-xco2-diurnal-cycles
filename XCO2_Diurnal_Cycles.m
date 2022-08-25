@@ -14,7 +14,7 @@ big_subsampled = 0;
 Daily_Struct_ETL = make_daily_array('east_trout_lake.nc');
 Daily_Struct_Lamont = make_daily_array('lamont.nc');
 Daily_Struct_Lauder = make_daily_array('lauder');
-Daily_Struct_PF = make_daily_array('pa20040526_20220228.public.qc.nc');
+Daily_Struct_PF = make_daily_array('park_falls.nc');
 Daily_Struct_Soda = make_daily_array('sodankyla.nc');
 
 %% start from here
