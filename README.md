@@ -1,24 +1,16 @@
-# XCO2 diurnal cycles - Summer Project 2022
+#  XCO2 diurnal cycles - Summer Project 2023 update
 
-This repo contains the code developed by Calla Marchetti during her summer 2022 
-internship. It can train a random forest model to predict both the diurnal cycle
-and drawdown of XCO2 given 3x daily input of XCO2 and several meteorological
-variables. TCCON data comprises the training and testing set.
+The current version aims to derive diurnal cycles from simulated OCO-2/3
+observations taken from TCCON data. The three subfolders are:
 
-## Setup
+1. `model` - this has the main model code
+2. `misc` - this has the plotting code and utilities functions that aren't 
+  part of the current model, but are still useful, and
+3. `defunct` - this has code that is probably bad, but might be salvagable,
+  as well as script versions of functions for debugging.
 
-* Make sure that the Python environment used by Matlab can import the `sklearn` package
-* Download the public TCCON GGG2020 data from tccondata.org for the following sites. Name
-  the files as follows:
-    - East Trout Lake: `east_trout_lake.nc`
-    - Lamont: `lamont.nc`
-    - Lauder (all three): `lauder01.nc`, `lauder02.nc`, `lauder03.nc`. 
-        * Note that the Lauder data is read from `Lauder.mat`, update that file if new Lauder
-          data available.
-    - Park Falls: `park_falls.nc`
-    - Sodankyla: `sodankyla.nc`
+## Quickstart
 
-## Usage
-
-The main driver script is `XCO2_Diurnal_Cycles.m`. Run that script to train and test the models,
-and see it for examples of usage for the rest of the code in this repo.
+- Set up a python environment in matlab, with sklearn and xgb modules. 
+- Download TCCON data from tccondata.org, rename files/ set file names in code.
+- Get the OCO-2/3 crossing data from Josh, or from the OCO-2 cluster
