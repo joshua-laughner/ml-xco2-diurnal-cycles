@@ -24,16 +24,23 @@ plot(Quart_Hour_Hours_Combo(number,:),Predicted_Cycles)
 figure()
 clf
 hold on
-scatter(Daily_Struct_Lamont.hours(:,207),Daily_Struct_Lamont.xco2(:,207))
-scatter(Quart_Hour_Hours_Lamont(207,:),Quart_Hour_Av_Lamont(207,:))
+scatter(Daily_Struct_Lamont.hours(:,200),Daily_Struct_Lamont.xco2(:,200))
+scatter(Quart_Hour_Hours_Lamont(200,:),Quart_Hour_Av_Lamont(200,:))
 
 %% visualizing my output cycles
 %number = randi([1 1111]);
 number = 0;
 %%
-number =randi([1 400]);
+figure(1)
+clf
 
-number
+plot([1:27],EOFs_Combo(7,:))
+ylim([-0.5 0.5])
+
+%%
+number =randi([1 427]);
+
+
 figure(2)
 clf
 p(1) = scatter(Quart_Hour_Hours.(fields{skip})(number,:),Test_Quart_Hour(number,:),'MarkerEdgeColor',[208 146 167]/255);
@@ -51,13 +58,14 @@ ylabel('XCO2', 'fontsize', 17)
 % putting in drawdown values
 xLimits = get(gca,'XLim');  % Get the range of the x axis
 yLimits = get(gca,'YLim');
-text(xLimits(1)+0.25,yLimits(2)-0.07,['actual drawdown: ' num2str(Drawdown_Struct.(fields{skip})(number))])
- text(xLimits(1)+0.25,yLimits(2)-0.13,['predicted drawdown: ', num2str(drawdown_predicted(number))])
- xline(solar_min_array(number)-2,'--k')
- xline(solar_min_array(number)+2,'--k')
-title(['ETL: ' Daily_Structs.(fields{skip}).days(number)], 'fontsize', 17)
-%print('-dtiff',['C:\Users\cmarchet\Box\JPL\slides and figures\Lamont_',num2str(number)])
-
+%text(xLimits(1)+0.25,yLimits(2)-0.07,['actual drawdown: ' num2str(Drawdown_Struct.(fields{skip})(number))])
+% text(xLimits(1)+0.25,yLimits(2)-0.13,['predicted drawdown: ', num2str(drawdown_predicted(number))])
+ %xline(solar_min_array(number)-2,'--k')
+ %xline(solar_min_array(number)+2,'--k')
+r2rmse(Predicted_Cycles(number,:),Test_Quart_Hour(number,:))
+title(['Lamont: ' Daily_Structs.(fields{skip}).days(number)], 'fontsize', 17)
+print('-dtiff',['C:\Users\cmarchet\Documents\ML_Code\figures\indiv_days_Lau\Lam_',num2str(number)])
+%%
 %
 % this one is going to be the line of best fit with error. 
 figure(3)

@@ -38,6 +38,7 @@ function [Struct] = make_daily_array(filename)
         altitude = ncread(filename,'zobs');
         xh2o = ncread(filename,'xh2o');
         xco2_error = ncread(filename,'xco2_error'); 
+        xco = ncread(filename,'xco');
     end
 
 %dealing with date formatting
@@ -62,7 +63,7 @@ function [Struct] = make_daily_array(filename)
      altitude_daily_array = [];
      xh2o_daily_array = [];
      xco2_error_daily_array = [];
-
+     xco_daily_array = [];
 
    
     kept_days = strings(5,1); %5 is arbitrary, so it knows its a string array
@@ -94,6 +95,7 @@ function [Struct] = make_daily_array(filename)
         altitude_i = altitude(day_index);
         xh2o_i = xh2o(day_index);
         xco2_error_i = xco2_error(day_index);
+        xco_i = xco(day_index);
          
 %things that we flag for
         if length(xco2_i) < 30
@@ -199,6 +201,9 @@ function [Struct] = make_daily_array(filename)
         xco2_error_sorted = xco2_error_i(sortind);
         xco2_error_sorted_rm = xco2_error_sorted(~TF);
 
+        xco_sorted = xco_i(sortind);
+        xco_sorted_rm = xco_sorted(~TF);
+
 
        
         if (column_num>1 && difference>0)
@@ -217,7 +222,7 @@ function [Struct] = make_daily_array(filename)
                altitude_sorted_rm = cat(1,altitude_sorted_rm,NaN);
                xh2o_sorted_rm = cat(1,xh2o_sorted_rm,NaN);
                xco2_error_sorted_rm = cat(1,xco2_error_sorted_rm, NaN);
-               
+               xco_sorted_rm = cat(1,xco_sorted_rm, NaN);
             end
 
         elseif (column_num>1 && difference < 0)
@@ -236,7 +241,7 @@ function [Struct] = make_daily_array(filename)
              altitude_daily_array(end+1:end+abs(difference), 1:i-1)= NaN;
              xh2o_daily_array(end+1:end+abs(difference), 1:i-1)= NaN;
              xco2_error_daily_array(end+1:end+abs(difference), 1:i-1)= NaN;
-
+             xco_daily_array(end+1:end+abs(difference), 1:i-1)= NaN;
 
            
         end
@@ -256,6 +261,7 @@ function [Struct] = make_daily_array(filename)
         altitude_daily_array(:, column_num) = altitude_sorted_rm;
         xh2o_daily_array(:, column_num) = xh2o_sorted_rm;
         xco2_error_daily_array(:, column_num) = xco2_error_sorted_rm;
+        xco_daily_array(:, column_num) = xco_sorted_rm;
   
        
         kept_days(column_num) = unique_dates(i);
@@ -279,6 +285,7 @@ function [Struct] = make_daily_array(filename)
    Struct.altitude = altitude_daily_array;
    Struct.xh2o = xh2o_daily_array;
    Struct.xco2_error = xco2_error_daily_array;
+   Struct.xco = xco_daily_array;
     
    %sometimes there are weird blank columns at the end? this gets rid of
    %them

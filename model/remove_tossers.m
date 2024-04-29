@@ -9,7 +9,7 @@ function [Daily_Struct] = remove_tossers(Daily_Struct, tossers)
     fields = fieldnames(Daily_Struct);
     for i = 1:length(fields)
         
-        if ( i ==5|| i ==6)
+        if ( i ==5|| i ==6 || i == length(fields) || i == length(fields)-1)
                Daily_Struct.(fields{i})(tossers) = [];
                continue
         end

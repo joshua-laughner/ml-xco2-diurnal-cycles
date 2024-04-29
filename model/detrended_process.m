@@ -1,134 +1,68 @@
 %runs through the process from start to finish --- DETRENDED VERSION!
-clear all
-addpath /home/cmarchet/Data/ %change this to whatever your path with the TCCON data is on
+%clear all
 
-%making daily arrays from TCCON
-%change the filename inputs in make_daily_array() to whatever your TCCON
-%.nc files are named
-
-%making the daily arrays takes a long time -- try to not run it every time
-savepath = '/home/cmarchet/Processed_Data/'; %change this to your savepath
-
-Daily_Struct_ETL = make_daily_array('east_trout_lake.nc');
-save([savepath,'Daily_Struct_ETL.mat'],'Daily_Struct_ETL','-v7.3')
-
-Daily_Struct_Lamont = make_daily_array('lamont.nc');
-save([savepath,'Daily_Struct_Lamont.mat'],'Daily_Struct_Lamont','-v7.3')
-
-Daily_Struct_Lauder = make_daily_array('lauder');
-save([savepath,'Daily_Struct_Lauder.mat'],'Daily_Struct_Lauder','-v7.3')
-
-Daily_Struct_PF = make_daily_array('park_falls.nc');
-save([savepath,'Daily_Struct_PF.mat'],'Daily_Struct_PF','-v7.3')
-
-Daily_Struct_Iza = make_daily_array('izana.nc');
-save([savepath,'Daily_Struct_Iza.mat'],'Daily_Struct_Iza','-v7.3')
-
-Daily_Struct_Nic = make_daily_array('nicosia.nc');
-save([savepath,'Daily_Struct_Nic.mat'],'Daily_Struct_Nic','-v7.3')
-
-
-%%
-clear all
-
-savepath = '/home/cmarchet/Processed_Data/'; %change this to your savepath
+savepath = 'C:\Users\cmarchet\Documents\ML_Code\Processed_Data\'; %change this to your savepath
 addpath(savepath)
+addpath 'C:\Users\cmarchet\Documents\ML_Code\Data\'
+Grow_Season = load(Grow_Season.mat);
 
-skip = 4; %my site order for skipping is: ETL = 1, Lamont = 2, Lauder = 3, PF = 4. 5/6 are Izana and Nicosia but we don't use them
 
-load Daily_Struct_Nic.mat
-load Daily_Struct_Iza.mat
-load Daily_Struct_PF.mat
-load Daily_Struct_Lauder.mat
-load Daily_Struct_Lamont.mat
-load Daily_Struct_ETL.mat
+%comment out empty call and uncomment second on the first run , and comment out the second call and uncomment the first for
+%subsequent runs unless one of those files needs to be changed
+data_setup_for_model() 
+% data_setup_for_model(‘make_daily_arrays’,1,’delta_temp’,1,’make_prob_dists’,1)
 
-%this section fits a polynomial to all days that pass a new quality filter,
-%and then reports the quarter hour interval points off that polynomial
-[Quart_Hour_Av_ETL, Tossers_ETL, Daynames_ETL, Quart_Hour_Hours_ETL,Daily_Struct_ETL] = prep_for_EOF_detrend(Daily_Struct_ETL,[1,2,3,4,9,10,11,12]);
-[Quart_Hour_Av_Lamont, Tossers_Lamont, Daynames_Lamont, Quart_Hour_Hours_Lamont,Daily_Struct_Lamont] = prep_for_EOF_detrend(Daily_Struct_Lamont,[1,2,11,12]);
-[Quart_Hour_Av_Lauder, Tossers_Lauder, Daynames_Lauder, Quart_Hour_Hours_Lauder,Daily_Struct_Lauder] = prep_for_EOF_detrend(Daily_Struct_Lauder,[5,6,7,8,9]);
-[Quart_Hour_Av_PF, Tossers_PF, Daynames_PF,Quart_Hour_Hours_PF,Daily_Struct_PF] = prep_for_EOF_detrend(Daily_Struct_PF,[1,2,3,4,9,10,11,12]);
-[Quart_Hour_Av_Iza, Tossers_Iza, Daynames_Iza,Quart_Hour_Hours_Iza,Daily_Struct_Iza] = prep_for_EOF_detrend(Daily_Struct_Iza,[]);
-[Quart_Hour_Av_Nic, Tossers_Nic, Daynames_Nic,Quart_Hour_Hours_Nic,Daily_Struct_Nic] = prep_for_EOF_detrend(Daily_Struct_Nic,[]);
+skippednames = {'ETL','PF','Lauder','Lamont'};
 
-%getting rid of the days from the daily arrays that didn't make it through
-%the EOF prep
-[Daily_Struct_ETL] = remove_tossers(Daily_Struct_ETL, Tossers_ETL);
-[Daily_Struct_Lamont] = remove_tossers(Daily_Struct_Lamont, Tossers_Lamont );
-[Daily_Struct_Lauder] = remove_tossers(Daily_Struct_Lauder, Tossers_Lauder );
-[Daily_Struct_PF] = remove_tossers(Daily_Struct_PF, Tossers_PF );
-[Daily_Struct_Iza] = remove_tossers(Daily_Struct_Iza, Tossers_Iza);
-[Daily_Struct_Nic] = remove_tossers(Daily_Struct_Nic, Tossers_Nic);
+% change these things!!!
 
-Longitudes = [-90.273, -104.98, 168.684,-97.486,-16.4991,33.381,150.879]; %the coordinates of the TCCON sites in order of the names listed
-Latitudes = [45.945,54.35,-45.038,36.604,28.309,35.141,-34.406];
-site_names = ["Park Falls", "East Trout Lake", "Lauder", "Lamont", "Izana", "Nicosia","Wollongong"];
-site_acr = ["PF","ETL","Lau","Lam","Iza","Nic","Wol"];
+method = 0; %this is an option for adding in 
+% simulated error. method = 0 is a pessimistic assumption that assumes
+% systematic errors between observing times don't cancel, and method = 1 is
+% an optimistic assumption that assumes they do. 
+ 
+sitenum_toskip = 1;
+skipbool = 1; % are we leaving a site out for testing? turn off when few sites
+%we almost always keep skipbool =1 ie we leave one site out for validation
 
-%this section is taking the OCO-2/3 crossings, filtering by TCCON site, and
-%fitting a probability distribution to the time OCO-2 crosses and the time
-%OCO-3 crosses 
-for i = 1:length(site_names) %this fits probability distributions by site
-[pd_OCO,pd_diff,time_diff,OCO2_time] = fit_prob_dist(Latitudes(i),Longitudes(i),'fig',0,'site_num',i,'min_diff',0);
-PD_Struct.(site_acr{i}).OCO2 = pd_OCO;
-PD_Struct.(site_acr{i}).diff = pd_diff;
+%hyperparameters for model
+ntrees_XGB = [800]; %tuning by r2 onyl 2 oxy
+learn_XGB = 0.07;%:.01:0.1; %controls how much weights are adjusted each step
+gamma_XGB = [0];%defaultm
+ndepth_XGB = [8]; %how complex tree can get, how many levels. adding constraing prevents overfitting
+nchild_XGB = [8]; %don't understand this one
+nsubsample_XGB = 1; %subsampling. which percent used. we already do traiing testing but this adds just a bit more
+lambda_XGB = [4]; %regularization term, makes model more conservative
+alpha_XGB = [5]; %regularlization term, makes model more conservative
+
+
+skip = skippednames{sitenum_toskip}; 
+
+Daily_Structs = init_sites('all'); %Make sure you call the site names correctly!
+%ETL, PF, Lamont, Lauder, Iza, Nic
+
+dailyfields = fieldnames(Daily_Structs);
+for f = 1:length(dailyfields)
+badmonths_struct.(dailyfields{f}) = ones(1,length(Daily_Structs.(dailyfields{f}).days));
 end
 
-%now we use those probability distributions to simulate OCO-2/3 crossings
-%over TCCON sites
-[Subsampled_ETL] = subsample_observations(Daily_Struct_ETL, 3, Daynames_ETL,PD_Struct.ETL);
-[Subsampled_Lamont] = subsample_observations(Daily_Struct_Lamont,3,Daynames_Lamont,PD_Struct.Lam);
-[Subsampled_Lauder] = subsample_observations(Daily_Struct_Lauder, 3,Daynames_Lauder,PD_Struct.Lau);
-[Subsampled_PF] = subsample_observations(Daily_Struct_PF, 3,Daynames_PF,PD_Struct.PF);
-[Subsampled_Iza] = subsample_observations(Daily_Struct_Iza,3,Daynames_Iza,PD_Struct.Iza);
-[Subsampled_Nic] = subsample_observations(Daily_Struct_Nic,3,Daynames_Nic,PD_Struct.Nic);
+Grow_Season = badmonths_struct;
+%Grow_Season = load(Grow_Season.mat);
 
-%this is called detrend using prior but we're not detrending. It's
-%essentially just getting rid of days with nans again. but for ALl structs
-[Quart_Hour_Av_ETL, Quart_Hour_Hours_ETL,Subsampled_ETL,Daily_Struct_ETL,idrem_ETL ] = detrend_using_prior(Subsampled_ETL, Quart_Hour_Av_ETL,Quart_Hour_Hours_ETL,Daily_Struct_ETL);
-[Quart_Hour_Av_Lamont, Quart_Hour_Hours_Lamont,Subsampled_Lamont,Daily_Struct_Lamont,idrem_Lamont ] = detrend_using_prior(Subsampled_Lamont, Quart_Hour_Av_Lamont,Quart_Hour_Hours_Lamont,Daily_Struct_Lamont);
-[Quart_Hour_Av_Lauder, Quart_Hour_Hours_Lauder,Subsampled_Lauder,Daily_Struct_Lauder,idrem_Lauder ] = detrend_using_prior(Subsampled_Lauder, Quart_Hour_Av_Lauder,Quart_Hour_Hours_Lauder,Daily_Struct_Lauder);
-[Quart_Hour_Av_PF, Quart_Hour_Hours_PF,Subsampled_PF,Daily_Struct_PF,idrem_PF ] = detrend_using_prior(Subsampled_PF, Quart_Hour_Av_PF,Quart_Hour_Hours_PF,Daily_Struct_PF);
-[Quart_Hour_Av_Iza,Quart_Hour_Hours_Iza, Subsampled_Iza,Daily_Struct_Iza,idrem_Iza] = detrend_using_prior(Subsampled_Iza, Quart_Hour_Av_Iza,Quart_Hour_Hours_Iza,Daily_Struct_Iza);
-[Quart_Hour_Av_Nic,Quart_Hour_Hours_Nic, Subsampled_Nic,Daily_Struct_Nic,idrem_Nic] = detrend_using_prior(Subsampled_Nic, Quart_Hour_Av_Nic,Quart_Hour_Hours_Nic,Daily_Struct_Nic);
+[Quart_Hour_Struct,Quart_Hour_Hours,Daily_Structs] = prep_for_EOF_detrend_all(Daily_Structs,Grow_Season);
+
+Subsampled_Struct = subsample_observations_flex(Daily_Structs,'type','oco2-3','start_times',-3,'num_obs',2,'spacings',3);
+
+Subsampled_Struct.(skip) = add_error(Subsampled_Struct.(skip),Daily_Structs.(skip),'type','oco2-3','location',skip,'error',0,'method',method);
+
+%getting rid of days with nans again. but for ALl structs
+[Quart_Hour_Struct,Quart_Hour_Hours,Subsampled_Struct,Daily_Structs] = cleanup_nans(Subsampled_Struct,Quart_Hour_Struct,Quart_Hour_Hours,Daily_Structs);
 
 %adding temp, humidity, pressure into my Structs
-[Subsampled_ETL,etl_tossers2] = add_GEOS(Daily_Struct_ETL.days, Subsampled_ETL,'ETL',Daily_Struct_ETL.solar_min);
-[Subsampled_Lamont,lam_tossers2] = add_GEOS(Daily_Struct_Lamont.days, Subsampled_Lamont,'Lam',Daily_Struct_Lamont.solar_min);
-[Subsampled_Lauder,lau_tossers2] = add_GEOS(Daily_Struct_Lauder.days, Subsampled_Lauder,'Lau',Daily_Struct_Lauder.solar_min);
-[Subsampled_PF,pf_tossers2] = add_GEOS(Daily_Struct_PF.days, Subsampled_PF,'PF',Daily_Struct_PF.solar_min);
-[Subsampled_Iza,iza_tossers2] = add_GEOS(Daily_Struct_Iza.days, Subsampled_Iza,'Iza',Daily_Struct_Iza.solar_min);
-[Subsampled_Nic,nic_tossers2] = add_GEOS(Daily_Struct_Nic.days, Subsampled_Nic,'Nic',Daily_Struct_Nic.solar_min);
+Subsampled_Struct = add_GEOS_all(Subsampled_Struct,Daily_Structs);
+
 %using those variables to calculate VPD
-Subsampled_ETL = calc_VPD(Subsampled_ETL);
-Subsampled_Lamont = calc_VPD(Subsampled_Lamont);
-Subsampled_Lauder = calc_VPD(Subsampled_Lauder);
-Subsampled_PF = calc_VPD(Subsampled_PF);
-Subsampled_Iza = calc_VPD(Subsampled_Iza);
-Subsampled_Nic = calc_VPD(Subsampled_Nic);
-
-%making structures that are nice bc I can grab from them easily
-Quart_Hour_Struct.ETL = Quart_Hour_Av_ETL;
-Quart_Hour_Struct.Lamont = Quart_Hour_Av_Lamont;
-Quart_Hour_Struct.Lauder = Quart_Hour_Av_Lauder;
-Quart_Hour_Struct.PF = Quart_Hour_Av_PF;
-Quart_Hour_Struct.Iza = Quart_Hour_Av_Iza;
-Quart_Hour_Struct.Nic = Quart_Hour_Av_Nic;
-
-Quart_Hour_Hours.ETL = Quart_Hour_Hours_ETL;
-Quart_Hour_Hours.Lamont = Quart_Hour_Hours_Lamont;
-Quart_Hour_Hours.Lauder = Quart_Hour_Hours_Lauder;
-Quart_Hour_Hours.PF = Quart_Hour_Hours_PF;
-Quart_Hour_Hours.Iza = Quart_Hour_Hours_Iza;
-Quart_Hour_Hours.Nic = Quart_Hour_Hours_Nic;
-
-Daynames_Struct.ETL = Daily_Struct_ETL.days;
-Daynames_Struct.Lamont = Daily_Struct_Lamont.days;
-Daynames_Struct.Lauder = Daily_Struct_Lauder.days;
-Daynames_Struct.PF = Daily_Struct_PF.days;
-Daynames_Struct.Iza = Daily_Struct_Iza.days;
-Daynames_Struct.Nic = Daily_Struct_Nic.days;
+Subsampled_Struct = calc_VPD(Subsampled_Struct);
 
 fields = fieldnames(Quart_Hour_Struct); %the site names
 
@@ -137,7 +71,7 @@ Quart_Hour_Hours_Combo = [];
 %making a struct of the quart hour avs for EOF generation (want one big
 %array), and keeping out the testing set
 for v = 1:length(fields)
-    if v == skip
+    if skipbool == 1 && strcmp(fields{v},skip)
         continue
     end
     Quart_Hour_Hours_Combo = cat(1,Quart_Hour_Hours_Combo,Quart_Hour_Hours.(fields{v}));
@@ -145,7 +79,7 @@ for v = 1:length(fields)
 end
 
 sum_expvar = 0;
-num_eofs = 6;
+num_eofs = 5;
 %calculating 6 EOFS based on the combination of TCCON days 
 while sum_expvar < 95
     [EOFs_Combo, PCs_Combo, Expvar_Combo] = mycaleof(Quart_Hour_Av_Combo, num_eofs);
@@ -154,82 +88,241 @@ while sum_expvar < 95
     num_eofs = num_eofs+1;
 end
 
-Daily_Structs.ETL = Daily_Struct_ETL;
-Daily_Structs.Lamont = Daily_Struct_Lamont;
-Daily_Structs.Lauder = Daily_Struct_Lauder;
-Daily_Structs.PF = Daily_Struct_PF;
-Daily_Structs.Nic = Daily_Struct_Nic;
-Daily_Structs.Iza = Daily_Struct_Iza;
-
-Subsampled_Struct.ETL = Subsampled_ETL;
-Subsampled_Struct.Lamont = Subsampled_Lamont;
-Subsampled_Struct.Lauder = Subsampled_Lauder;
-Subsampled_Struct.PF = Subsampled_PF;
-Subsampled_Struct.Nic = Subsampled_Nic;
-Subsampled_Struct.Iza = Subsampled_Iza;
-
-features = fieldnames(Subsampled_ETL);
+features = fieldnames(Subsampled_Struct.(fields{1}));
  for z = 1:length(features)
     Subsampled_Combo.(features{z}) = [];
  end
 
 
 for b = 1:length(fields) %looping over all sites
-    if b == skip
+    if skipbool == 1 && strcmp(fields{b},skip)
+        disp(['skipping',fields{b}] )
         continue
     end
     
-    
     for z = 1:length(features) %looping over all features
        %each feature is now a combo from all sites 
-    Subsampled_Combo.(features{z}) = cat(1, Subsampled_Combo.(features{z}), Subsampled_Struct.(fields{b}).(features{z}));
+       
+        if z == 31 || z == 32
+             Subsampled_Combo.(features{z}) = cat(1, Subsampled_Combo.(features{z}), Subsampled_Struct.(fields{b}).(features{z}).');
+            continue
+        end
+         Subsampled_Combo.(features{z}) = cat(1, Subsampled_Combo.(features{z}), Subsampled_Struct.(fields{b}).(features{z}));
+
     end
  
 end
 
-PCs_Combo(:,:) =sign(PCs_Combo(:,:)).*log10(abs(PCs_Combo(:,:))+1); %taking the log bc small values
-%%
-%hyperparameters for model
-ntrees_XGB = [900]; %tuning by r2 onyl 2 oxy
-learn_XGB = 0.03;%:.01:0.2; %controls how much weights are adjusted each step
-gamma_XGB = [0];%default
-ndepth_XGB = [9]; %how complex tree can get, how many levels. adding constraing prevents overfitting
-nchild_XGB = [9]; %don't understand this one
-nsubsample_XGB = 0.91:.01:0.96; %subsampling. which percent used. we already do traiing testing but this adds just a bit more
-lambda_XGB = [0]; %regularization term, makes model more conservative
-alpha_XGB = [3]; %regularlization term, makes model more conservative
-
 %running da model
-[PC_preds,idrem,MODEL] = xgb_model_detrend(PCs_Combo(:,:),Subsampled_Combo,Subsampled_Struct.(fields{skip}),ntrees_XGB,learn_XGB,gamma_XGB,ndepth_XGB,nchild_XGB,nsubsample_XGB,lambda_XGB,alpha_XGB);
+if skipbool == 1
+[PC_preds,idrem,MODEL,importance,rem,idx] = xgb_model_detrend(PCs_Combo(:,:),Subsampled_Combo,Subsampled_Struct.(skip),ntrees_XGB,learn_XGB,gamma_XGB,ndepth_XGB,nchild_XGB,nsubsample_XGB,lambda_XGB,alpha_XGB);
+Test_Quart_Hour = Quart_Hour_Struct.(skip);
+ Test_Quart_Hour_Times = Quart_Hour_Hours.(skip);
+
+ Quart_Hour_Av_Combo(rem,:) = [];
+ m = size(Quart_Hour_Av_Combo,1) ;
+ P = 0.70 ; 
+ InBag_Comp = Quart_Hour_Av_Combo(idx(1:round(P*m)),:);
+ OOB_Comp = Quart_Hour_Av_Combo(idx(round(P*m)+1:end),:);
+
+else
+    disp('notest')
+[PC_preds,MODEL,reportind] = xgb_model_notest(PCs_Combo(:,:),Subsampled_Combo,ntrees_XGB,learn_XGB,gamma_XGB,ndepth_XGB,nchild_XGB,nsubsample_XGB,lambda_XGB,alpha_XGB);
+Test_Quart_Hour = Quart_Hour_Av_Combo(reportind,:);
+Test_Quart_Hour_Times = Quart_Hour_Hours_Combo(reportind,:);
+end
+%[PC_preds,MDL,importance] = xgb_model_detrend_tt(PCs_Combo(:,:),Subsampled_Combo,[1:471],ntrees_XGB,learn_XGB,gamma_XGB,ndepth_XGB,nchild_XGB,nsubsample_XGB,lambda_XGB,alpha_XGB);
 
 %the actual data
- Test_Quart_Hour = Quart_Hour_Struct.(fields{skip});
- Test_Quart_Hour_Times = Quart_Hour_Hours.(fields{skip});
-
  %here I'm reconstructing my predicted days from the EOFs and the PCs
  pc_names = fieldnames(PC_preds);
  pc_names(1:10) = [];
+ Predicted_Cycles = [];
 for number = 1:length(PC_preds.pc_1(1).oobPred)
   Predicted_Cycles(number,:) = zeros(1,27);
  
     for i = 1:num_eofs-1
         %adding each EOF one by one with their weighting to get the output
         %day 
-        Predicted_Cycles(number,:) = Predicted_Cycles(number,:)+ EOFs_Combo(i,:).*(sign(PC_preds.(pc_names{i}).oobPred(number)).*(10.^(abs(PC_preds.(pc_names{i}).oobPred(number)))-1)) ;%+ EOFs_Combo(2,:).*PCs_Combo(number,2) + EOFs_Combo(3,:).*PCs_Combo(number,3) + EOFs_Combo(4,:).*PCs_Combo(number,4);
+        Predicted_Cycles(number,:) = Predicted_Cycles(number,:)+ EOFs_Combo(i,:).*(PC_preds.(pc_names{i}).oobPred(number));%+ EOFs_Combo(2,:).*PCs_Combo(number,2) + EOFs_Combo(3,:).*PCs_Combo(number,3) + EOFs_Combo(4,:).*PCs_Combo(number,4);
 
     end
 end
 
+OOB_Cycles = [];
+for number = 1:length(PC_preds.pc_1(1).oob_train)
+  OOB_Cycles(number,:) = zeros(1,27);
+ 
+    for i = 1:num_eofs-1
+        %adding each EOF one by one with their weighting to get the output
+        %day 
+        OOB_Cycles(number,:) = OOB_Cycles(number,:)+ EOFs_Combo(i,:).*(PC_preds.(pc_names{i}).oob_train(number));%+ EOFs_Combo(2,:).*PCs_Combo(number,2) + EOFs_Combo(3,:).*PCs_Combo(number,3) + EOFs_Combo(4,:).*PCs_Combo(number,4);
+
+    end
+end
+
+InBag_Cycles = [];
+for number = 1:length(PC_preds.pc_1(1).inBagPred)
+  InBag_Cycles(number,:) = zeros(1,27);
+ 
+    for i = 1:num_eofs-1
+        %adding each EOF one by one with their weighting to get the output
+        %day 
+        InBag_Cycles(number,:) = InBag_Cycles(number,:)+ EOFs_Combo(i,:).*(PC_preds.(pc_names{i}).inBagPred(number));%+ EOFs_Combo(2,:).*PCs_Combo(number,2) + EOFs_Combo(3,:).*PCs_Combo(number,3) + EOFs_Combo(4,:).*PCs_Combo(number,4);
+
+    end
+end
+
+
+Test_Quart_Hour(idrem,:) = [];
+Test_Quart_Hour_Times(idrem,:) = [];
 %stacking all the real to predicted day so that I can get the OOB stats for
 %the site
 long_predicted = [];
 long_real = [];
-for i = 1:size(Quart_Hour_Struct.(fields{skip}),1)
+for i = 1:size(Test_Quart_Hour,1)
     long_predicted = cat(2, long_predicted, Predicted_Cycles(i,:));
     long_real = cat(2, long_real, Test_Quart_Hour(i,:));
    
 end
 
+inbag_predicted = [];
+inbag_real = [];
+for i = 1:size(InBag_Comp,1)
+    inbag_predicted = cat(2, inbag_predicted, InBag_Cycles(i,:));
+    inbag_real = cat(2, inbag_real, InBag_Comp(i,:));
+   
+end
+
+oob_predicted = [];
+oob_real = [];
+for i = 1:size(OOB_Comp,1)
+    oob_predicted = cat(2, oob_predicted, OOB_Cycles(i,:));
+    oob_real = cat(2, oob_real, OOB_Comp(i,:));
+   
+end
+
+
+%save([savepath,'error_',num2str(method),'_Big_Fig.mat'],'Big_Fig') 
+
+
+%%
+savepath = 'C:\Users\cmarchet\Documents\ML_Code\figures\Paper_Figs\oco2-3sim\';
+h1 = figure(1);
+clf
+r2rmse(inbag_predicted,inbag_real)
+dscatter(inbag_predicted.',inbag_real.')
+cmocean('solar')
+rl = refline([1 0]);
+rl.LineWidth = 1.25;
+rl.Color = 'w';%the 1:1 line
+rb = refline([1 0]);
+rb.LineWidth = 0.7;
+rb.Color = 'k';%the 1:1 line
+%ylim([-2.5 2.1])
+set(h1, 'Units', 'normalized');
+set(h1, 'Position', [0.1, .55, .4, .45]);
+colorbar
+print('-dtiff',[savepath,'\method',num2str(method),skip,'_inbagptp'])
+%%
+h2 = figure(2);
+clf
+r2rmse(oob_predicted,oob_real)
+dscatter(oob_predicted.',oob_real.')
+cmocean('-matter')
+set(h2, 'Units', 'normalized');
+set(h2, 'Position', [0.1, .55, .4, .45]);
+rl = refline([1 0]);
+rl.LineWidth = 1.25;
+rl.Color = 'w';%the 1:1 line
+rb = refline([1 0]);
+rb.LineWidth = 0.7;
+rb.Color = 'k';%the 1:1 line
+%xlim([-1 1])
+colorbar
+print('-dtiff',[savepath,'\method',num2str(method),skip,'_oobptp'])
+%%
+h3 = figure(3);
+r2rmse(long_predicted,long_real)
+dscatter(long_predicted.',long_real.')
+cmocean('thermal')
+rl = refline([1 0]);
+rl.LineWidth = 1.25;
+rl.Color = 'w';%the 1:1 line
+rb = refline([1 0]);
+rb.LineWidth = 0.7;
+rb.Color = 'k';%the 1:1 line
+%xlim([-1 1])
+ylim([-2.2 2.2])
+set(h3, 'Units', 'normalized')
+set(h3, 'Position', [0.1, .55, .4, .45]);
+colorbar
+%print('-dtiff',[savepath,'\method',num2str(method),skip,'_valptp'])
+%%
+h4 = figure(4);
+actual_drawdown = InBag_Comp(:,22)- InBag_Comp(:,6);
+predicted_drawdown = InBag_Cycles(:,22) - InBag_Cycles(:,6);
+r2rmse(predicted_drawdown,actual_drawdown)
+dscatter(predicted_drawdown,actual_drawdown,'Filled',false,'Marker','o')
+cmocean('solar')
+rl = refline([1 0]);
+rl.LineWidth = 1.25;
+rl.Color = 'w';%the 1:1 line
+rb = refline([1 0]);
+rb.LineWidth = 0.7;
+rb.Color = 'k';%the 1:1 line
+%xlim([-2.7 2])
+set(h4, 'Units', 'normalized');
+set(h4, 'Position', [0.1, .55, .4, .45]);
+colorbar
+print('-dtiff',[savepath,'\method',num2str(method),skip,'_inbagdraw'])
+
+%%
+h5 = figure(5);
+actual_drawdown = OOB_Comp(:,22)- OOB_Comp(:,6);
+predicted_drawdown = OOB_Cycles(:,22) - OOB_Cycles(:,6);
+r2rmse(predicted_drawdown,actual_drawdown)
+dscatter(predicted_drawdown,actual_drawdown,'Filled',false,'Marker','o')
+cmocean('-matter')
+refline([1 0]) %the 1:1 line
+rl = refline([1 0]);
+rl.LineWidth = 1.25;
+rl.Color = 'w';%the 1:1 line
+rb = refline([1 0]);
+rb.LineWidth = 0.7;
+rb.Color = 'k';%the 1:1 line
+%ylim([-2 1.5])
+%xlim([-1 0.6])
+set(h5, 'Units', 'normalized');
+set(h5, 'Position', [0.1, .55, .4, .45]);
+colorbar
+print('-dtiff',[savepath,'\method',num2str(method),skip,'_oobdraw'])
+%%
+h6 = figure(6);
+actual_drawdown = Test_Quart_Hour(:,22)- Test_Quart_Hour(:,6);
+predicted_drawdown = Predicted_Cycles(:,22) - Predicted_Cycles(:,6);
+r2rmse(predicted_drawdown,actual_drawdown)
+dscatter(predicted_drawdown,actual_drawdown,'Filled',false,'Marker','o')
+cmocean('thermal')
+refline([1 0]) %the 1:1 line
+rl = refline([1 0]);
+rl.LineWidth = 1.25;
+rl.Color = 'w';%the 1:1 line
+rb = refline([1 0]);
+rb.LineWidth = 0.7;
+rb.Color = 'k';%the 1:1 line
+%ylim([-2.5 1.5])
+%xlim([-1 0.7])
+set(h6, 'Units', 'normalized');
+set(h6, 'Position', [0.1, .55, .4, .45]);
+colorbar
+print('-dtiff',[savepath,'\method',num2str(method),skip,'_valdraw'])
+
+
+
+
+
+%%
 figure(1)
 clf
 TOTAL_R2 = r2rmse(long_predicted, long_real)
@@ -238,6 +331,33 @@ cmocean('thermal')
 refline([1 0]) %the 1:1 line
 xlabel('Predicted XCO_2', 'fontsize', 17)
 ylabel('Actual XCO_2', 'fontsize', 17)
-title(['Actual Versus Predicted XCO_2 at ', fields{skip}], 'fontsize', 17)
+title(['Actual Versus Predicted XCO_2 at ', skip], 'fontsize', 17)
 colorbar
+%print('-dtiff',['C:\Users\cmarchet\Documents\ML_Code\figures\validationmeeting\idealdrawreal_',skip])
 
+figure(2)
+clf
+actual_drawdown = Test_Quart_Hour(:,22)- Test_Quart_Hour(:,6);
+predicted_drawdown = Predicted_Cycles(:,22) - Predicted_Cycles(:,6);
+scatter_r2 = r2rmse(predicted_drawdown,actual_drawdown)
+dscatter(predicted_drawdown,actual_drawdown)
+refline([1 0]) %the 1:1 line
+xlabel('Predicted Drawdown', 'fontsize', 17)
+ylabel('Actual Drawdown', 'fontsize', 17)
+title(['Actual Versus Predicted Drawdown at ', skip], 'fontsize', 17)
+colorbar
+%print('-dtiff',['C:\Users\cmarchet\Documents\ML_Code\figures\validationmeeting\idealdrawdraw_',skip])
+
+%end
+%% look at indiv days
+number = randi([1 size(Test_Quart_Hour_Times,1)]);
+number
+figure(2)
+clf
+scatter(Test_Quart_Hour_Times(number,:),Test_Quart_Hour(number,:))
+hold on
+scatter(Test_Quart_Hour_Times(number,:),Predicted_Cycles(number,:))
+xlabel('UTC hour')
+ylabel('XCO_2 (ppm)')
+legend('actual','pred')
+title([skip, Daily_Structs.(skip).days(number)])

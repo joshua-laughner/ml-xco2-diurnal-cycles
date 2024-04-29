@@ -101,7 +101,7 @@ else
     sunset = -1;
     ss_string = sprintf('Sunset out of 24h bounds');
 end
-fprintf('%s\n%s\n', sr_string, ss_string)
+fprintf('%s\n%s\n', sr_string, ss_string);
 
 % Generate output
 sun_rise_set = [sunrise sunset];

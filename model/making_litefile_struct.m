@@ -53,5 +53,5 @@ end
 
 
 end
-%%
+
 save('Crossing_Struct.mat','Crossing_Struct')

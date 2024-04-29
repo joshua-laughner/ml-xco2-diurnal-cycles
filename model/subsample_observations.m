@@ -28,6 +28,9 @@ function [subsampled_struct] = subsample_observations(location_struct, min_point
 
             OCO2_index = find(abs(location_struct.hours(:,day) - OCO2_time) < 0.25); %search for all TCCON points within half an hour of selected times
             OCO3_index = find(abs(location_struct.hours(:,day) - OCO3_time)< 0.25);
+
+            OCO2_time = nanmean(location_struct.hours(OCO2_index,day));
+            OCO3_time = nanmean(location_struct.hours(OCO3_index,day));
             quit = 0;
             if count == 5 %don't want to be drawing forever
                 quit = 1;
@@ -37,19 +40,32 @@ function [subsampled_struct] = subsample_observations(location_struct, min_point
         if quit == 1
             continue
         end
+
+        if OCO2_time < OCO3_time
         subsampled_struct.hours(day,1) = OCO2_time;
         subsampled_struct.hours(day,2) = OCO3_time;
+        first_index = OCO2_index;
+        second_index = OCO3_index;
+        else
+         subsampled_struct.hours(day,2) = OCO2_time;
+         subsampled_struct.hours(day,1) = OCO3_time;
+            first_index = OCO3_index;
+        second_index = OCO2_index;
+        end
         subsampled_struct.delta_solmin(day,1) = time;
 
         subsampled_struct.daynames(day,1) = Daynames_Struct(day);
           
         for field = 1:length(fields)
-          %  field
+           %field
             if field == 2 %we already have hours in. don't need it again
                 continue
             end
-            subsampled_struct.(fields{field})(day,1) = nanmean(location_struct.(fields{field})(OCO2_index,day));
-            subsampled_struct.(fields{field})(day,2) = nanmean(location_struct.(fields{field})(OCO3_index,day));
+            if field == length(fields)|| field == length(fields)-1
+                continue
+            end
+            subsampled_struct.(fields{field})(day,1) = nanmean(location_struct.(fields{field})(first_index,day));
+            subsampled_struct.(fields{field})(day,2) = nanmean(location_struct.(fields{field})(second_index,day));
 
 
         end
@@ -69,4 +85,6 @@ function [subsampled_struct] = subsample_observations(location_struct, min_point
    subsampled_struct.prior_diff(:,1) = subsampled_struct.xco2(:,1) - subsampled_struct.prior_xco2(:,1); 
    subsampled_struct.prior_diff(:,2) = subsampled_struct.xco2(:,2) - subsampled_struct.prior_xco2(:,2);
    subsampled_struct.h2o_p_diff(:,1) = subsampled_struct.xh2o(:,1) - subsampled_struct.prior_xh2o(:,1);
+   subsampled_struct.delta_temp_abs = location_struct.delta_abs.';
+   subsampled_struct.delta_temp_reg = location_struct.delta_reg.';
    end

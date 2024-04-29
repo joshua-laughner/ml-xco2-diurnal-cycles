@@ -1,12 +1,8 @@
-function [quart_hour_av_xco2_2, tossers, acceptable_daynames, quart_hour_hours,location_struct] = prep_for_EOF_detrend(location_struct,badmonths)
-% a lot of this script is around taking actual quarter hour averages rather
-% than the polynomial, but I keep it this way for now because I like the
-% criteria of needing a certain numbers of points per hour and a certain
-% number of hours in a row represented
+function [quart_hour_av_xco2, tossers, acceptable_daynames, quart_hour_hours,location_struct] = prep_for_EOF_detrend(location_struct,badmonths)
 
 days = length(location_struct.xco2(1,:));
 quart_hour_av_xco2 = nan(days,27); %27 because of 6.5 hours centered around solar noon, quarter hour interals
-quart_hour_av_xco2_2 = nan(days,27);
+%quart_hour_av_xco2_2 = nan(days,27);
 quart_hour_hours = nan(days,27);
 
 for day = 1:days
@@ -21,8 +17,7 @@ quart_hour_hours(day,:) = steps; %recording the UTC times
 step_size = length(steps);
 
     for i = 1:step_size
-    % this section is the direct quarter hour averaging. again, not really
-    % relevant
+    % this section is the direct quarter hour averaging
         timeind = find(abs(location_struct.hours(:,day) - steps(i)) < .5); 
         if isempty(timeind)
             continue
@@ -35,10 +30,6 @@ step_size = length(steps);
 
     end
 
-    goodind = find(~isnan(location_struct.hours(:,day))); % because of the whole adding Nans thing in making the daily arrays, we gotta take out the nans
-h = polyfit(location_struct.hours(goodind,day),location_struct.xco2(goodind,day),5); %fitting a fifth degree polynomial
-f1 = polyval(h,steps); %evaluating the polynomial at our quarter hour intervals and adding it to the array
-quart_hour_av_xco2_2(day,:) = f1;
 end
 
 %this section is why we do the quarter hour averaging above. 
@@ -75,6 +66,13 @@ tossers = find(acceptable_day == 0); %getting rid of days where the day isn't go
 acceptable_daynames = location_struct.days;
 acceptable_daynames(tossers) = [];
 quart_hour_hours(tossers,:) = [];
-quart_hour_av_xco2_2(tossers,:) = [];
+quart_hour_av_xco2(tossers,:) = [];
+
+for day = 1:length(quart_hour_av_xco2(:,1))
+    nnanind = find(~isnan(quart_hour_av_xco2(day,:)));
+    quart_hour_av_xco2(day,:) = interp1(steps(nnanind), quart_hour_av_xco2(day,nnanind), steps, 'spline', 'extrap');
+
+end
+
 
 end

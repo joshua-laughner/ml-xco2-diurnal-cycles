@@ -4,7 +4,13 @@ days = length(location_struct.xco2(1,:));
 quart_hour_av_xco2 = nan(days,27);
 quart_hour_hours = nan(days,27);
 for day = 1:days
+    
 solar_min = location_struct.solar_min(day);
+%this section here detrends our data!
+near_sn = find(abs(location_struct.hours(:,day) - solar_min)<0.5 );
+xco2_at_noon = mean(location_struct.xco2(near_sn,day));
+location_struct.xco2(:,day) = location_struct.xco2(:,day) - xco2_at_noon;
+
 steps = solar_min - 3.25:0.25:solar_min+3.25;
 quart_hour_hours(day,:) = steps;
 step_size = length(steps);

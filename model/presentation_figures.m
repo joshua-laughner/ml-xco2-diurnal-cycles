@@ -11,13 +11,16 @@ geobasemap streets-light
 title('TCCON Sites Used')
 
 %%
-number = randi([1 size(Daily_Struct_ETL.hours,2)]);
+number = randi([1 size(Test_Quart_Hour_Times,1)]);
 
 figure(2)
-scatter(Daily_Struct_ETL.hours(:,number),Daily_Struct_ETL.xco2(:,number),5,[208 146 167]/255,'filled')
+clf
+scatter(Test_Quart_Hour_Times(number,:),Test_Quart_Hour(number,:))
+hold on
+scatter(Test_Quart_Hour_Times(number,:),Predicted_Cycles(number,:))
 xlabel('UTC hour')
 ylabel('XCO_2 (ppm)')
-title(['East Trout Lake ', Daily_Struct_ETL.days(number)])
+title(['East Trout Lake ', Daily_Structs.(skip).days(number)])
 %% slide 2 
 % figure with my subsampling 
 number = 326;%randi([1 size(Subsampled_Struct.ETL.hours,1)]);

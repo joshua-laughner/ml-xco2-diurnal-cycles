@@ -1,9 +1,8 @@
-function [Subsampled_Struct,tossers] = add_GEOS(Daynames, Subsampled_Struct, site_name,solmin_array)
+function [Subsampled_Struct] = add_GEOS(Daynames, Subsampled_Struct, site_name,solmin_array)
 %GEOS info from GEOS_process_.m and Process_GEOS.m
 
 years_list = year(Daynames); %all the days from the TCCON site that we want to get the GEOS info from as a feature
 years_rep = unique(years_list); %how many individual years are there -- these are the GEOS files we need to load in
-tossers = [];
 count = 0;
 for i = 1:length(years_rep) %loop through all the years we have
     TCCON_days_in_year = Daynames(years_list == years_rep(i)); %how many days from that year do we have
@@ -124,7 +123,7 @@ for i = 1:length(years_rep) %loop through all the years we have
             Subsampled_Struct.GEOS_temp(count,:) = interp_temp;
             Subsampled_Struct.GEOS_humidity(count,:) = interp_humidity;
         else
-            tossers = cat(1,tossers,find(Daynames == TCCON_days_in_year(j)));
+          
         end
 
     end

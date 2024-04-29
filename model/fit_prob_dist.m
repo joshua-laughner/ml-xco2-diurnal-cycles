@@ -8,8 +8,8 @@ function [pd_OCO2,pd_diff,time_diff,OCO2_time] = fit_prob_dist(Lat,Lon,varargin)
 %load OCO_time_wrt_SN.mat 
 
 load C:\Users\cmarchet\Box\JPL\Processed_Data\Lite_Struct.mat
-load C:\Users\cmarchet\Box\JPL\Processed_Data\time_difference.mat
-load C:\Users\cmarchet\Box\JPL\Processed_Data\OCO_time_wrt_SN.mat
+time_difference = Lite_Struct.time_difference;
+OCO_time_wrt_SN = Lite_Struct.OCO_time_wrt_SN;
 
 A.fig = 0;
 A.site_num = 0;
@@ -37,8 +37,8 @@ OCO2_time(too_small_ind) = [];
 bool_array = time_diff>A.min_diff;
 
 pd_OCO2 = fitdist(OCO2_time.','burr');
-%pd_diff = fitdist(time_diff.','kernel');
-pd_diff = fitdist(time_diff.','Kernel','By',bool_array);
+pd_diff = fitdist(time_diff.','kernel');
+%pd_diff = fitdist(time_diff.','Kernel','By',bool_array);
 
 
 if A.fig == 1
@@ -62,7 +62,7 @@ xlabel('time difference between observations')
 ylabel('number of observations')
 title([site_names(A.site_num),' OCO2/3 time difference Histogram'])
 file_name = strcat(site_acr(A.site_num),'_OCO23_diff_2_1');
-print('-dtiff',strcat('C:\Users\cmarchet\Box\JPL\slides and figures\',file_name))
+%print('-dtiff',strcat('C:\Users\cmarchet\Box\JPL\slides and figures\',file_name))
 
 figure(2)
 clf

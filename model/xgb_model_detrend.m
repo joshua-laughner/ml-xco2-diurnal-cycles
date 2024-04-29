@@ -1,4 +1,4 @@
-function [PC_preds, idrem2,MDL] = xgb_model_detrend(PCs,Features, test_features, start_trees, start_learn, start_gamma,start_depth, start_child,start_subsample,start_lambda, start_alpha,varargin)
+function [PC_preds, idrem2,MDL,importance,rem,idx] = xgb_model_detrend(PCs,Features, test_features, start_trees, start_learn, start_gamma,start_depth, start_child,start_subsample,start_lambda, start_alpha,varargin)
 %% a machine learning model that predicts the PCs of each day based on the Subsampled TCCON features
 %inputs: PCs: principal components for training sites. Size: number of
 %days x number of EOFs
@@ -37,32 +37,27 @@ ntrees = trees(randperm(length(trees),1));
 
 MDL = py.xgboost.XGBRegressor(pyargs('n_estimators', int32(ntrees), 'eta', learn, 'gamma', int32(ngamma), 'max_depth', int32(ndepth), 'min_child_weight', int32(nchild), 'subsample', nsubsample, 'lambda', int32(nlambda), 'alpha', int32(nalpha))); 
    
-%ind
-%this is the full features set
-%preds = [Features.xco2(:,:),Features.delta_xco2(:,:),Features.delta_solzen(:,:),Features.solzen(:,:), Features.azim(:,:), Features.temp(:,:), Features.delta_temp(:,:)...
- %   Features.pressure(:,:), Features.wind_speed(:,:), Features.prior_xh2o(:,:),Features.prior_xco2(:,:),Features.xh2o_error(:,:)...
- %   Features.airmass(:,:), Features.altitude(:,:), Features.xh2o(:,:), Features.xco2_error(:,:), Features.delta_solmin(:,:), Features.delta_hour(:,:),...
- %   Features.delta_azim(:,:), Features.delta_pressure(:,:), Features.delta_wind_speed(:,:), Features.delta_airmass(:,:), Features.delta_xh2o(:,:), Features.prior_diff(:,1),Features.VPD(:,:),Features.GEOS_humidity(:,:)]; %, , Features.temp(:,:)Features.trop_alt(:,:), Features.mid_trop_pot_temp(:,:), Features.pres_alt(:,:), ...
-
 %this is a simplified features set
-preds = [Features.xco2(:,:),Features.delta_xco2(:,:), Features.delta_solzen(:,:),Features.solzen(:,:),Features.azim(:,:), Features.delta_hour(:,:),...
-   Features.delta_solmin(:,:),Features.delta_azim(:,:),Features.temp(:,:),Features.delta_temp(:,:),Features.VPD(:,:)];
+%preds = [Features.xco2(:,:),mean(Features.xco2,2),Features.delta_xco2(:,:), Features.delta_solzen(:,:),Features.solzen(:,:),Features.azim(:,:), Features.delta_hour(:,:),...
+ %  Features.delta_solmin(:,:),Features.delta_azim(:,:),Features.temp(:,:),Features.delta_temp(:,:),Features.VPD(:,:), Features.delta_temp_abs(:),Features.delta_temp_reg(:)];
 
-test_preds = [test_features.xco2(:,:),test_features.delta_xco2(:,:), test_features.delta_solzen(:,:),test_features.solzen(:,:),test_features.azim(:,:),test_features.delta_hour(:,:),...
-  test_features.delta_solmin(:,:),test_features.delta_azim(:,:),test_features.temp(:,:),test_features.delta_temp(:,:),test_features.VPD(:,:)];
+%test_preds = [test_features.xco2(:,:),mean(test_features.xco2,2),test_features.delta_xco2(:,:), test_features.delta_solzen(:,:),test_features.solzen(:,:),test_features.azim(:,:),test_features.delta_hour(:,:),...
+ % test_features.delta_solmin(:,:),test_features.delta_azim(:,:),test_features.temp(:,:),test_features.delta_temp(:,:),test_features.VPD(:,:),test_features.delta_temp_abs(:),test_features.delta_temp_reg(:)];
+% full features set-- raw, delta, mean for everything 
 
-%test_preds = [test_features.xco2(:,:),test_features.delta_xco2(:,:),test_features.delta_solzen(:,:),test_features.solzen(:,:), test_features.azim(:,:), test_features.temp(:,:), test_features.delta_temp(:,:)...
- %  test_features.pressure(:,:), test_features.wind_speed(:,:), test_features.prior_xh2o(:,:),test_features.prior_xco2(:,:),test_features.xh2o_error(:,:)...
- %   test_features.airmass(:,:), test_features.altitude(:,:), test_features.xh2o(:,:), test_features.xco2_error(:,:), test_features.delta_solmin(:,:), test_features.delta_hour(:,:),...
- %   test_features.delta_azim(:,:), test_features.delta_pressure(:,:), test_features.delta_wind_speed(:,:), test_features.delta_airmass(:,:), test_features.delta_xh2o(:,:), test_features.prior_diff(:,1),test_features.VPD(:,:),test_features.GEOS_humidity(:,:)]; %, , Features.temp(:,:)Features.trop_alt(:,:), Features.mid_trop_pot_temp(:,:), Features.pres_alt(:,:), ...
+preds = [Features.hours(:,:),Features.delta_hours(:,:),Features.delta_solmin(:,:),Features.solzen(:,:),Features.delta_solzen(:,:),mean(Features.solzen,2),Features.azim(:,:),Features.delta_azim(:,:)...
+    ,mean(Features.azim,2),Features.delta_xco2(:,:),(Features.delta_xco2(:,:)./Features.delta_hours(:,:)),Features.temp(:,:),Features.delta_temp(:,:), mean(Features.temp,2)...
+    ,Features.pressure(:,:),Features.delta_pressure(:,:),mean(Features.pressure,2), Features.wind_speed(:,:),Features.delta_wind_speed(:,:),mean(Features.wind_speed,2)...
+    ,Features.prior_xco2(:,:),mean(Features.prior_xco2,2), Features.airmass(:,:),Features.delta_airmass(:,:),mean(Features.airmass,2)...
+    ,Features.delta_temp_abs(:,:),Features.delta_temp_reg(:,:),Features.VPD(:,:),mean(Features.VPD,2)];
 
- %just delta xco2 --- bad
- %preds = [Features.delta_xco2(:,:), Features.delta_solzen(:,:),Features.solzen(:,:),Features.azim(:,:), Features.delta_hour(:,:),...
- %  Features.delta_solmin(:,:),Features.delta_azim(:,:),Features.temp(:,:),Features.delta_temp(:,:),Features.VPD(:,:)];
-
-%test_preds = [test_features.delta_xco2(:,:), test_features.delta_solzen(:,:),test_features.solzen(:,:),test_features.azim(:,:),test_features.delta_hour(:,:),...
- % test_features.delta_solmin(:,:),test_features.delta_azim(:,:),test_features.temp(:,:),test_features.delta_temp(:,:),test_features.VPD(:,:)];
-
+%nnind = find(~isnan(test_features.delta_solmin));
+%test_features.delta_solmin = test_features.delta_solmin(nnind);
+test_preds = [test_features.hours(:,:),test_features.delta_hours(:,:),test_features.delta_solmin(:,:),test_features.solzen(:,:),test_features.delta_solzen(:,:),mean(test_features.solzen,2),test_features.azim(:,:),test_features.delta_azim(:,:)...
+    ,mean(test_features.azim,2),test_features.delta_xco2(:,:),(test_features.delta_xco2(:,:)./test_features.delta_hours(:,:)),test_features.temp(:,:),test_features.delta_temp(:,:), mean(test_features.temp,2)...
+    ,test_features.pressure(:,:),test_features.delta_pressure(:,:),mean(test_features.pressure,2), test_features.wind_speed(:,:),test_features.delta_wind_speed(:,:),mean(test_features.wind_speed,2)...
+    ,test_features.prior_xco2(:,:),mean(test_features.prior_xco2,2),test_features.airmass(:,:),test_features.delta_airmass(:,:),mean(test_features.airmass,2)...
+    ,test_features.delta_temp_abs(:,:).',test_features.delta_temp_reg(:,:).',test_features.VPD(:,:),mean(test_features.VPD,2)];
 
 target = PCs(:,:); 
 full_pred = preds(:,:);
@@ -79,7 +74,7 @@ preds_train = full_pred(idx(1:round(P*m)),:);
 target_test = target(idx(round(P*m)+1:end),:); %the testing is the remaining 30%
 preds_test = full_pred(idx(round(P*m)+1:end),:);
    
-    preds_train = py.numpy.asarray(preds_train); %putting things into python arrays
+   preds_train = py.numpy.asarray(preds_train); %putting things into python arrays
     target_train = py.numpy.asarray(target_train);
     preds_test = py.numpy.asarray(preds_test);
     target_test = py.numpy.asarray(target_test);
@@ -91,6 +86,7 @@ preds_test = full_pred(idx(round(P*m)+1:end),:);
  a = py.numpy.asarray(a);
 
  MDL = MDL.fit(preds_train,target_train); %training model on trainig data
+importance = double(MDL.feature_importances_);
 
   yhat = double(MDL.predict(preds_train)); %having the model do inbag prediction
   y1_oob = double(MDL.predict(preds_test)); %having model to oob prediction
@@ -120,6 +116,7 @@ preds_test = full_pred(idx(round(P*m)+1:end),:);
  
     PC_preds.(name_list{i})(ind).oobPred = y_oob(:,i); % OOB for PCs
     PC_preds.(name_list{i})(ind).inBagPred = yhat(:,i);
+    PC_preds.(name_list{i})(ind).oob_train = y1_oob(:,i);
     PC_preds.(name_list{i})(ind).inBagStats = r2rmse(yhat(:,i),target_train(:,i));
     PC_preds.(name_list{i})(ind).oobStats = r2rmse(y1_oob(:,i),target_test(:,i));
    end
