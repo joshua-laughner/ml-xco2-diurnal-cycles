@@ -1,3 +1,14 @@
+# XCO2 diurnal cycles from machine learning
+
+This repo contains experimental code designed to test the ability of a machine learning model trained on [TCCON](https://tccondata.org/)
+data to reproduce diurnal cycles of XCO2 from more temporally sparse observations, such as those from satellites.
+A manuscript describing and evaluating this approach is forthcoming.
+
+*This code is provided as-is; any support provided by the maintainers to those who wish to use this code will
+be done on an "as-available" basis, constrained by our other responsibilities.*
+
+## Setup instructions
+
 *First: need to set up a python environment in matlab*  
 Download python, install xgboost and sklearn via conda install or mamba install. Make sure the python version is compatible with the matlab version. Then type `pyenv(Version="[path to python]")`
 
@@ -46,7 +57,8 @@ Download python, install xgboost and sklearn via conda install or mamba install.
     - This code assumes the GEOS files are named by and organized into folders by year, then subfolders by month, and subsubfolders by day, and the for loops are looping over those folders. If your files are organized differently, change the for loops and the automatic naming of the files
     - Change savepath to where processed data is saved
 
-**Command that you run to train the model**
+## Training and application
+**Commands that you run to train the model**
 
 *detrended_process*
 - Change addpath to the directory all the data above is saved to
