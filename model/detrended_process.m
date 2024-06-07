@@ -1,10 +1,10 @@
 %runs through the process from start to finish --- DETRENDED VERSION!
-%clear all
+clear all
 
 savepath = 'C:\Users\cmarchet\Documents\ML_Code\Processed_Data\'; %change this to your savepath
 addpath(savepath)
 addpath 'C:\Users\cmarchet\Documents\ML_Code\Data\'
-Grow_Season = load(Grow_Season.mat);
+load Grow_Season 
 
 
 %comment out empty call and uncomment second on the first run , and comment out the second call and uncomment the first for
@@ -16,7 +16,7 @@ skippednames = {'ETL','PF','Lauder','Lamont'};
 
 % change these things!!!
 
-method = 0; %this is an option for adding in 
+method = 1; %this is an option for adding in 
 % simulated error. method = 0 is a pessimistic assumption that assumes
 % systematic errors between observing times don't cancel, and method = 1 is
 % an optimistic assumption that assumes they do. 
@@ -51,9 +51,9 @@ Grow_Season = badmonths_struct;
 
 [Quart_Hour_Struct,Quart_Hour_Hours,Daily_Structs] = prep_for_EOF_detrend_all(Daily_Structs,Grow_Season);
 
-Subsampled_Struct = subsample_observations_flex(Daily_Structs,'type','oco2-3','start_times',-3,'num_obs',2,'spacings',3);
+Subsampled_Struct = subsample_observations_flex(Daily_Structs,'type','create','start_times',-3,'num_obs',3,'spacings',3);
 
-Subsampled_Struct.(skip) = add_error(Subsampled_Struct.(skip),Daily_Structs.(skip),'type','oco2-3','location',skip,'error',0,'method',method);
+%Subsampled_Struct.(skip) = add_error(Subsampled_Struct.(skip),Daily_Structs.(skip),'type','oco2-3','location',skip,'error',0,'method',method);
 
 %getting rid of days with nans again. but for ALl structs
 [Quart_Hour_Struct,Quart_Hour_Hours,Subsampled_Struct,Daily_Structs] = cleanup_nans(Subsampled_Struct,Quart_Hour_Struct,Quart_Hour_Hours,Daily_Structs);
@@ -62,6 +62,7 @@ Subsampled_Struct.(skip) = add_error(Subsampled_Struct.(skip),Daily_Structs.(ski
 Subsampled_Struct = add_GEOS_all(Subsampled_Struct,Daily_Structs);
 
 %using those variables to calculate VPD
+
 Subsampled_Struct = calc_VPD(Subsampled_Struct);
 
 fields = fieldnames(Quart_Hour_Struct); %the site names
@@ -104,6 +105,7 @@ for b = 1:length(fields) %looping over all sites
        %each feature is now a combo from all sites 
        
         if z == 31 || z == 32
+           
              Subsampled_Combo.(features{z}) = cat(1, Subsampled_Combo.(features{z}), Subsampled_Struct.(fields{b}).(features{z}).');
             continue
         end
@@ -113,6 +115,12 @@ for b = 1:length(fields) %looping over all sites
  
 end
 
+
+Subsampled_Struct.(skip).delta_temp_abs = Subsampled_Struct.(skip).delta_temp_abs.';
+Subsampled_Struct.(skip).delta_temp_reg = Subsampled_Struct.(skip).delta_temp_reg.';
+
+
+%%
 %running da model
 if skipbool == 1
 [PC_preds,idrem,MODEL,importance,rem,idx] = xgb_model_detrend(PCs_Combo(:,:),Subsampled_Combo,Subsampled_Struct.(skip),ntrees_XGB,learn_XGB,gamma_XGB,ndepth_XGB,nchild_XGB,nsubsample_XGB,lambda_XGB,alpha_XGB);
@@ -204,6 +212,7 @@ end
 
 
 %save([savepath,'error_',num2str(method),'_Big_Fig.mat'],'Big_Fig') 
+%%
 
 
 %%
@@ -316,7 +325,7 @@ rb.Color = 'k';%the 1:1 line
 set(h6, 'Units', 'normalized');
 set(h6, 'Position', [0.1, .55, .4, .45]);
 colorbar
-print('-dtiff',[savepath,'\method',num2str(method),skip,'_valdraw'])
+%print('-dtiff',[savepath,'\method',num2str(method),skip,'_valdraw'])
 
 
 
@@ -349,15 +358,24 @@ colorbar
 %print('-dtiff',['C:\Users\cmarchet\Documents\ML_Code\figures\validationmeeting\idealdrawdraw_',skip])
 
 %end
+
 %% look at indiv days
 number = randi([1 size(Test_Quart_Hour_Times,1)]);
-number
-figure(2)
+%number = 233
+%165 39 233 533
+figure(3)
 clf
-scatter(Test_Quart_Hour_Times(number,:),Test_Quart_Hour(number,:))
+scatter(Test_Quart_Hour_Times(number,:),Test_Quart_Hour(number,:),50, [0.5 0.5 0.5],'LineWidth',1.3)
+act = Test_Quart_Hour(number,22) - Test_Quart_Hour(number,6)
+real = Predicted_Cycles(number,22) - Predicted_Cycles(number,6)
 hold on
-scatter(Test_Quart_Hour_Times(number,:),Predicted_Cycles(number,:))
-xlabel('UTC hour')
-ylabel('XCO_2 (ppm)')
-legend('actual','pred')
+scatter(Test_Quart_Hour_Times(number,:),Predicted_Cycles(number,:),75,'k','*','LineWidth',0.9)
+%scatter(Subsampled_Struct.(skip).hours(number,:),Subsampled_Struct.(skip).xco2(number,:),40, [0.5430 0 0],'filled')
+%scatter(Subsampled_Struct.(skip).hours(number,:),Subsampled_Struct.(skip).xco2(end,:),40,[0.5430 0 0],'LineWidth',0.9)
+%xlabel('UTC hour')
+%ylabel('XCO_2 (ppm)')
+legend('TCCON Diurnal Cycle','Model Predicted Diurnal Cycle','location','southwest')
 title([skip, Daily_Structs.(skip).days(number)])
+%ylim([-0.7 0.2])
+set(gca,'FontSize',17)
+%print('-dtiff',['C:\Users\cmarchet\Documents\ML_Code\figures\Paper_Figs\demo_error\err',num2str(number)])
