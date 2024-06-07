@@ -128,7 +128,7 @@ xgb_model_detrends outputs these variables:
  </span> 
 predicted_PCs will be an array of size[num_EOFs]x[num days inputted], and it can be used to create model predicted diurnal cycles by applying it to the EOFs following 
 
-
+```
 for number = 1:size(predicted_PCs,1)  
 
 Predicted_Cycles(number,:) = zeros(1,size(predicted_PCs,2));
@@ -136,7 +136,8 @@ Predicted_Cycles(number,:) = zeros(1,size(predicted_PCs,2));
     for i = 1:num_eofs
     Predicted_Cycles(number,:) = Predicted_Cycles(number,:)+EOFs_Combo(i,:).*(predicted_PCs(number,i));
     end
-    end
+end
+```
 
 
 
