@@ -53,7 +53,7 @@ parfor i = 1:length(Crossing_Struct)
     
 
 end
-
+%%
 date_array = nan(length(Crossing_Struct),3);
 month_names = ["jan";"feb";"mar";"apr";"may";"jun";"jul";"aug";"sep";"oct";"nov";"dec"];
 
@@ -84,12 +84,26 @@ for i = 1:15722
     array_dt(i) = datetime(date_string{i});
 
 end
+%%
 X = convertTo(array_dt,'epochtime','Epoch','1970-01-01');
 
 OCO_seconds_of_day = [Lite_Struct.OCO2_time]-double(X);
+OCO3_seconds = [Lite_Struct.OCO3_time] - double(X);
 OCO_time_wrt_SN = (OCO_seconds_of_day - solar_noon_array)/(60*60); %i'm actually starting on such a terrible foot by not saving anything
 OCO_time_wrt_SN(OCO_time_wrt_SN< -24) = OCO_time_wrt_SN(OCO_time_wrt_SN< -24) + 24;
 OCO_time_wrt_SN(OCO_time_wrt_SN> 24) = OCO_time_wrt_SN(OCO_time_wrt_SN> 24) -24;
-Lite_Struct.OCO_time_wrt_SN = OCO_time_wrt_SN;
+
+
+OCO3_time_wrt_SN = (OCO3_seconds- solar_noon_array)/(60*60); %i'm actually starting on such a terrible foot by not saving anything
+OCO3_time_wrt_SN(OCO3_time_wrt_SN< -24) = OCO3_time_wrt_SN(OCO3_time_wrt_SN< -24) + 24;
+OCO3_time_wrt_SN(OCO3_time_wrt_SN> 24) = OCO3_time_wrt_SN(OCO3_time_wrt_SN> 24) -24;
+
+
 time_difference = ([Lite_Struct.OCO3_time] - [Lite_Struct.OCO2_time])/(60*60);
-Lite_Struct.time_difference = time_difference;
+for i = 1:15722
+Lite_Struct(i).OCO_time_wrt_SN = OCO_time_wrt_SN(i);
+
+Lite_Struct(i).time_difference = time_difference(i);
+Lite_Struct(i).OCO3_wrt_SN = OCO3_time_wrt_SN(i);
+end
+save('C:\Users\cmarchet\Documents\ML_Code\Processed_Data\Lite_Struct.mat','Lite_Struct','-v7.3')

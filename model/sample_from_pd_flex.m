@@ -15,10 +15,10 @@ if strcmp(A.type,'self')
 
    times_struct.time_1 = random(first_pd) + solmin;
 
-    diff_rand = rand * 893;
-    %if diff_rand < 1044  %this isn't the most  science-y way of doing something
-     %   times_struct.time2 = times_struct.time_1+ 1.6;
-    if diff_rand < 551
+    diff_rand = rand * 1937;
+    if diff_rand < 1044  %this isn't the most  science-y way of doing something
+        times_struct.time2 = times_struct.time_1+ 1.6;
+    elseif diff_rand < 2044+551
         times_struct.time_2 = times_struct.time_1  + 3.2;
     else 
         times_struct.time2 = times_struct.time_1 + 4.9;

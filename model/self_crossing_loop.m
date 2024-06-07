@@ -16,7 +16,7 @@ skippednames = {'ETL','PF','Lauder','Lamont'};
 
 for met = 0:1
 method = met 
-for site = 1:4
+for site = 1:2
  bigloop = site
 skipbool = 1; % are we leaving a site out for testing? turn off when few sites
 
@@ -24,20 +24,17 @@ skipbool = 1; % are we leaving a site out for testing? turn off when few sites
 skip = skippednames{bigloop}; 
 %PLACEHOLDER! For growing season sim
 
-Daily_Structs = init_sites('all'); %Make sure you call the site names correctly!
+Daily_Structs = init_sites('ETL','PF'); %Make sure you call the site names correctly!
 %ETL, PF, Lamont, Lauder, Iza, Nic
 All_Seasons.PF = ones(1,length(Daily_Structs.PF.days));
 All_Seasons.ETL = ones(1,length(Daily_Structs.ETL.days));
-All_Seasons.Lauder = ones(1,length(Daily_Structs.Lauder.days));
-All_Seasons.Lamont = ones(1,length(Daily_Structs.Lamont.days));
-All_Seasons.Iza = ones(1,length(Daily_Structs.Iza.days));
-All_Seasons.Nic = ones(1,length(Daily_Structs.Nic.days));
+
 
 [Quart_Hour_Struct,Quart_Hour_Hours,Daily_Structs] = prep_for_EOF_detrend_all(Daily_Structs,All_Seasons);
 
-Subsampled_Struct = subsample_observations_flex(Daily_Structs,'type','oco2-3','start_times',-3,'num_obs',2,'spacings',3);
+Subsampled_Struct = subsample_observations_flex(Daily_Structs,'type','self','start_times',-3,'num_obs',2,'spacings',3);
 
-Subsampled_Struct.(skip) = add_error(Subsampled_Struct.(skip),Daily_Structs.(skip),'type','oco2-3','location',skip,'error',0,'method',method);
+Subsampled_Struct.(skip) = add_error(Subsampled_Struct.(skip),Daily_Structs.(skip),'type','self','location',skip,'error',0,'method',method);
 
 %getting rid of days with nans again. but for ALl structs
 [Quart_Hour_Struct,Quart_Hour_Hours,Subsampled_Struct,Daily_Structs] = cleanup_nans(Subsampled_Struct,Quart_Hour_Struct,Quart_Hour_Hours,Daily_Structs);
@@ -220,7 +217,7 @@ Big_Fig.(skip).val_real = long_real;
 %save([savepath,'error_',num2str(method),'_Big_Fig.mat'],'Big_Fig') 
 end
 
-save([savepath,'error_',num2str(method),'_Big_Fig.mat'],'Big_Fig')
+save([savepath,'Self_error_',num2str(method),'_Big_Fig.mat'],'Big_Fig')
 end
 
 

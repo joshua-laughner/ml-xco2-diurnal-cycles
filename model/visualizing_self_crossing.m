@@ -35,11 +35,27 @@ for i = 1:length(Longitudes)-1
 end
 %%
 figure(2)
+clf
 geoscatter(mean_lats,mean_lons,35,scount,'filled','MarkerFaceAlpha',0.7)
 geobasemap topographic
 cmocean('dense')
 colorbar()
 title('OCO3 number of self crossings by location')
+geocrop([0 75])
+%%
+load coastlines
+worldmap([0 70],[-180 180])
+geoshow(coastlat,coastlon,"DisplayType","polygon", ...
+    "FaceColor",[0.9 1 0.9])
+scatterm(mean_lats,mean_lons,35,scount,'filled','MarkerFaceAlpha',0.7)
+cmocean('dense')
+%colorbar()
+caxis([-5 120])
+print('-dtiff','C:\Users\cmarchet\Documents\ML_Code\figures\Paper_Figs\self_cross_loc\loc2')
+
+%colorbar('Location','south')
+
+
 %%
 av_lat = nanmean([[Lite_Struct.OCO3a_latitude];[Lite_Struct.OCO3b_latitude]],1);
 av_lon = nanmean([[Lite_Struct.OCO3a_longitude];[Lite_Struct.OCO3b_longitude]],1);

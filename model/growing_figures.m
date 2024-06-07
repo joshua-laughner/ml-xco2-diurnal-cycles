@@ -65,7 +65,7 @@ rb.Color = 'k';%the 1:1 line
 set(h1, 'Units', 'normalized');
 set(h1, 'Position', [0.1, .55, .4, .45]);
 colorbar
-print('-dtiff',[savepath,'inbag_big'])
+%print('-dtiff',[savepath,'inbag_big'])
 %%
 h2 = figure(2);
 clf
@@ -85,11 +85,11 @@ rb.Color = 'k';%the 1:1 line
 xlim([-2.2 2])
 ylim([-2.2 2])
 colorbar
-print('-dtiff',[savepath,'oob_big'])
+%print('-dtiff',[savepath,'oob_big'])
 %%
 h3 = figure(3);
-r2rmse(val_p0_big,val_r0_big)
-dscatter(val_r0_big.',val_p0_big.')
+r2rmse(val_p1_big,val_r1_big)
+dscatter(val_r1_big.',val_p1_big.')
 xlim([-2 2])
 cmocean('thermal')
 rl = refline([1 0]);
@@ -120,7 +120,7 @@ rb.Color = 'k';%the 1:1 line
 set(h4, 'Units', 'normalized');
 set(h4, 'Position', [0.1, .55, .4, .45]);
 colorbar
-print('-dtiff',[savepath,'inbagdraw'])
+%print('-dtiff',[savepath,'inbagdraw'])
 
 %%
 h5 = figure(5);
@@ -139,7 +139,7 @@ xlim([-2 1.75])
 set(h5, 'Units', 'normalized');
 set(h5, 'Position', [0.1, .55, .4, .45]);
 colorbar
-print('-dtiff',[savepath,'oobdraw'])
+%print('-dtiff',[savepath,'oobdraw'])
 %%
 h6 = figure(6);
 r2rmse(val_p0_draw,val_r0_draw)

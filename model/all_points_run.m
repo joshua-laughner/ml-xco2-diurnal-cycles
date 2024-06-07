@@ -1,5 +1,5 @@
 %% Test! what happens if we give the model all 27 points? 
-%%clear all
+clear all
 
 savepath = 'C:\Users\cmarchet\Documents\ML_Code\Processed_Data\'; %change this to your savepath
 addpath(savepath)
@@ -7,7 +7,6 @@ addpath 'C:\Users\cmarchet\Documents\ML_Code\Data\'
 
 data_setup_for_model() %change this to a function with inputs and outputs
 skippednames = {'ETL','PF','Lauder','Lamont'};
-%for bigloop = 1%:2
 for site = 1:4
  bigloop = site
 skipbool = 1; % are we leaving a site out for testing? turn off when few sites

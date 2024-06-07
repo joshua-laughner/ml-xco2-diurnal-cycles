@@ -16,8 +16,10 @@ skip = skippednames{bigloop};
 
 %preliminary -- will make tighter spacing and wider range after we know
 %this works
-start_times = -4:0.25:-2;
-spacing = 1.75:0.25:3.5;
+%start_times = -5:0.25:-3;
+%spacing = 0.75:0.25:2.75;
+start_times = -2.5:0.25:-0.5;
+spacing = 2.75:0.25:4.5;
 
 PTP_R2 = nan(length(start_times),length(spacing));
 PTP_RMSE = nan(length(start_times),length(spacing));
@@ -41,7 +43,7 @@ badmonths_struct.Nic = ones(1,length(Daily_Structs.Nic.days));
 
 [Quart_Hour_Struct,Quart_Hour_Hours,Daily_Structs] = prep_for_EOF_detrend_all(Daily_Structs,badmonths_struct);
 
-Subsampled_Struct = subsample_observations_flex(Daily_Structs,'type','create','start_times',start_times(st),'num_obs',3,'spacings',spacing(sp));
+Subsampled_Struct = subsample_observations_flex(Daily_Structs,'type','create','start_times',start_times(st),'num_obs',2,'spacings',spacing(sp));
 
 %getting rid of days with nans again. but for ALl structs
 [Quart_Hour_Struct,Quart_Hour_Hours,Subsampled_Struct,Daily_Structs] = cleanup_nans(Subsampled_Struct,Quart_Hour_Struct,Quart_Hour_Hours,Daily_Structs);
@@ -119,6 +121,8 @@ for b = 1:length(fields) %looping over all sites
  
 end
 
+Subsampled_Struct.(skip).delta_temp_abs = Subsampled_Struct.(skip).delta_temp_abs.';
+Subsampled_Struct.(skip).delta_temp_reg = Subsampled_Struct.(skip).delta_temp_reg.';
 %hyperparameters for model
 ntrees_XGB = [800]; %tuning by r2 onyl 2 oxy
 learn_XGB = 0.07;%:.01:0.1; %controls how much weights are adjusted each step
@@ -135,7 +139,9 @@ for runs = 1:3
 if skipbool == 1
 [PC_preds,idrem,MODEL,importance] = xgb_model_detrend(PCs_Combo(:,:),Subsampled_Combo,Subsampled_Struct.(skip),ntrees_XGB,learn_XGB,gamma_XGB,ndepth_XGB,nchild_XGB,nsubsample_XGB,lambda_XGB,alpha_XGB);
 Test_Quart_Hour = Quart_Hour_Struct.(skip);
+Test_Quart_Hour(idrem,:) = [];
  Test_Quart_Hour_Times = Quart_Hour_Hours.(skip);
+ Test_Quart_Hour_Times(idrem,:) = [];
 
 else
     disp('notest')
@@ -186,9 +192,9 @@ Draw_R2(sp,st) = mean(draw_R2);
  
     end
 end
-%%
-save('C:\Users\cmarchet\Documents\ML_Code\Processed_Data\3pts_DrawR2','Draw_R2')
-save('C:\Users\cmarchet\Documents\ML_Code\Processed_Data\3pts_PTPR2','PTP_R2')
+
+save('C:\Users\cmarchet\Documents\ML_Code\Processed_Data\2pts_DrawR2','Draw_R2')
+save('C:\Users\cmarchet\Documents\ML_Code\Processed_Data\2pts_PTPR2','PTP_R2')
 %%
 figure(1)
 clf

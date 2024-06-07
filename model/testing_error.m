@@ -172,23 +172,25 @@ end
 
 save('C:\Users\cmarchet\Documents\ML_Code\Processed_Data\New_Error_Sims.mat','Error_Sims')
 %%
+error = [0.01,0.05,0.1,0.2,0.4,0.5,0.8,1];
 h6 = figure(3);
 clf
-plot(error,Error_Sims.oco23.draw,'LineWidth',1.8,'LineStyle','-','Color',[120 40 63]/255);
+plot(error,Error_Sims.oco23.ptp,'LineWidth',1.8,'LineStyle','-','Color',[120 40 63]/255);
 hold on 
-plot(error,Error_Sims.idealptp_3pts.draw,'LineWidth',2,'LineStyle','-.','Color',[154 49 67]/255);
-plot(error,Error_Sims.idealptp_2pts.draw,'LineWidth',2,'LineStyle','--','Color',[186 75 58]/255);
-plot(error,Error_Sims.idealdraw_3pts.draw,'LineWidth',2.2,'LineStyle',':','Color',[215 87 40]/255);
-plot(error,Error_Sims.idealdraw_2pts.draw,'LineWidth',1.8,'LineStyle','-','Color',[229 106 25]/255);
+plot(error,Error_Sims.idealptp_3pts.ptp,'LineWidth',2,'LineStyle','-.','Color',[154 49 67]/255);
+plot(error,Error_Sims.idealptp_2pts.ptp,'LineWidth',2,'LineStyle','--','Color',[186 75 58]/255);
+plot(error,Error_Sims.idealdraw_3pts.ptp,'LineWidth',2.2,'LineStyle',':','Color',[215 87 40]/255);
+plot(error,Error_Sims.idealdraw_2pts.ptp,'LineWidth',1.8,'LineStyle','-','Color',[229 106 25]/255);
 xticks(error);
 xtickangle(45)
 set(gca,'XScale','log')
 xlim([0 1])
-legend('oco2-3','3 pts, ptp','2 pts, ptp', '3 pts, draw','2 pts, draw','location','southwest','fontsize',10)
-
+legend('oco2-3','3 pts, ptp','2 pts, ptp', '3 pts, draw','2 pts, draw','location','southwest','fontsize',13)
+ylim([0.2 0.805])
 %set(h6, 'Units', 'normalized');
 %set(h6, 'Position', [0.5, .1, .5, .55]);
-print('-dtiff','C:\Users\cmarchet\Documents\ML_Code\figures\Paper_Figs\error_sim_prelim\new_log_draw')
+set(gca,'FontSize',15)
+print('-dtiff','C:\Users\cmarchet\Documents\ML_Code\figures\Paper_Figs\error_sim_prelim\new_log_ptp')
 
 %%
 h6 = figure(3);

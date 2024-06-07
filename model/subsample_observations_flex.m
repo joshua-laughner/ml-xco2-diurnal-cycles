@@ -45,7 +45,7 @@ for loc = 1:length(sites)
             time_names = fieldnames(times_struct);
             index_length_array = nan(1,length(time_names));
             for time = 1:length(time_names)
-                index = find(abs(location_struct.hours(:,day) - times_struct.(time_names{time})) < 0.25); %search for all TCCON points within half an hour of selected times
+                index = find(abs(location_struct.hours(:,day) - times_struct.(time_names{time})) < 0.5); %search for all TCCON points within half an hour of selected times
                 index_length_array(time) = length(index);
                 index_struct.(time_names{time}) = index;
             end

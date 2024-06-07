@@ -16,6 +16,8 @@ T = T -272.15; %C
 r = q./(1-q); %mixing ratio
 vpair = p.*(r./(r+eps));
 vpsat = 6.112.*exp((17.67*T)./(T + 243.5));
+%vpsat = exp(17.67.*(T - 273.15)./(T - 29.65));
+
 
 Subsampled_Struct.VPD = vpsat - vpair;
 Subsampled_Structs.(locations{loc}) = Subsampled_Struct;

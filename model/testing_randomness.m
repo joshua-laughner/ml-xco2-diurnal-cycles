@@ -13,12 +13,7 @@ bigloop = 1;
 skipbool = 1; % are we leaving a site out for testing? turn off when few sites
 skip = skippednames{bigloop}; 
 %PLACEHOLDER!
-badmonths_struct.ETL = [];
-badmonths_struct.PF = [];
-badmonths_struct.Lamont = [];
-badmonths_struct.Lauder = [];
-badmonths_struct.Iza = [];
-badmonths_struct.Nic = [];
+
 
 %preliminary -- will make tighter spacing and wider range after we know
 %this works
@@ -29,7 +24,7 @@ startimes = [-3,-1.5,-2.25,-2.25];
 spacings = [3,4.25,2.25,4.5];
 num_obs = [3,2,3,2];
 
-for i = 3:length(simnames)
+for i = [1,3]
 PTP_R2 = nan(length(randomness),length(randomness_sp));
 PTP_RMSE = nan(length(randomness),length(randomness_sp));
 Draw_R2 = nan(length(randomness),length(randomness_sp));
@@ -42,7 +37,10 @@ for st = 1:length(randomness)
 
 Daily_Structs = init_sites('all'); %Make sure you call the site names correctly!
 %ETL, PF, Lamont, Lauder, Iza, Nic
-
+dailyfields = fieldnames(Daily_Structs);
+for f = 1:length(dailyfields)
+badmonths_struct.(dailyfields{f}) = ones(1,length(Daily_Structs.(dailyfields{f}).days));
+end
 [Quart_Hour_Struct,Quart_Hour_Hours,Daily_Structs] = prep_for_EOF_detrend_all(Daily_Structs,badmonths_struct);
 
 Subsampled_Struct = subsample_observations_flex(Daily_Structs,'type','prob_dist','start_times',startimes(i),'num_obs',num_obs(i),'spacings',spacings(i),'stdev_sp',randomness_sp(sp),'stdev_st',randomness(st));
@@ -135,7 +133,7 @@ alpha_XGB = [2]; %regularlization term, makes model more conservative
 
 %running da model
 
-for runs = 1
+for runs = 1:3
 if skipbool == 1
 [PC_preds,idrem,MODEL,importance] = xgb_model_detrend(PCs_Combo(:,:),Subsampled_Combo,Subsampled_Struct.(skip),ntrees_XGB,learn_XGB,gamma_XGB,ndepth_XGB,nchild_XGB,nsubsample_XGB,lambda_XGB,alpha_XGB);
 Test_Quart_Hour = Quart_Hour_Struct.(skip);

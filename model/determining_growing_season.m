@@ -83,11 +83,11 @@ time = datetime(Daily_Structs.(sites{site}).days);
 y = sineval(ft,time);
 figure()
 clf
-plot(time,y)
+plot(time,y,'LineWidth',1,'Color','k')
 hold on
-scatter(time,daily_mean_temp,2,'filled')
+scatter(time,daily_mean_temp,4,'filled')
 
-scatter(time,Grow_Season.ETL*10,10,'filled')
+%scatter(time,Grow_Season.ETL*10,10,'filled')
 %%
 time = Daily_Structs.Iza.days;
 time = datetime(time);
