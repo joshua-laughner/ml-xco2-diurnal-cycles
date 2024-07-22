@@ -1,6 +1,7 @@
-function [Struct] = make_daily_array(filename)
+function [Struct] = make_daily_array(filename, utc_offset_hours)
 %% puts the values from the TCCON .nc file into an array separated by day
-%input: name of the TCCON .nc file
+%input: name of the TCCON .nc file and the number of hours to add to UTC to get the
+% site's local time. For example, Lamont in US central time would have an offset of -6.0.
 
     if strcmp(filename, 'lauder') %lauder comes in three parts so i already took things out and made one .mat file
         %lauder file is made in processing_lauder_files
@@ -22,6 +23,7 @@ function [Struct] = make_daily_array(filename)
         xh2o = Lauder.xh2o;
         xco2_error = Lauder.xco2_error;
 
+        xco = Lauder.xco;
     else % reading in the data from the netcdf files. big long arrays
         xco2 = ncread(filename, 'xco2');
         solzen = ncread(filename, 'solzen');
@@ -42,7 +44,7 @@ function [Struct] = make_daily_array(filename)
     end
 
 %dealing with date formatting
-    calendar_time = datetime(1970,1,1) + seconds(time);
+    calendar_time = datetime(1970,1,1) + seconds(time) + seconds(utc_offset_hours * 3600);
     calendar_time.Format = 'yyyy-MM-dd';
 
     unique_dates = unique(string(calendar_time));

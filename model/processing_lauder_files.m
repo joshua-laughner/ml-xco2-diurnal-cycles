@@ -2,6 +2,7 @@
 savepath = '/home/cmarchet/Data/'; %change this to your savepath
 
 xco2_lauder01 = ncread('lauder01.nc', 'xco2');
+xco_lauder01 = ncread('lauder01.nc', 'xco');
 solzen_lauder01 = ncread('lauder01.nc', 'solzen');
 year_lauder01 = ncread('lauder01.nc', 'year');
 day_lauder01 = ncread('lauder01.nc', 'day');
@@ -22,8 +23,10 @@ airmass_lauder01 = ncread('lauder01.nc','airmass');
 altitude_lauder01 = ncread('lauder01.nc','zobs');
 xh2o_lauder01 = ncread('lauder01.nc','xh2o');
 xco2_error_lauder01 = ncread('lauder01.nc','xco2_error');
+xco_error_lauder01 = ncread('lauder01.nc','xco_error');
 
 xco2_lauder02 = ncread('lauder02.nc', 'xco2');
+xco_lauder02 = ncread('lauder02.nc', 'xco');
 solzen_lauder02 = ncread('lauder02.nc', 'solzen');
 year_lauder02 = ncread('lauder02.nc', 'year');
 day_lauder02 = ncread('lauder02.nc', 'day');
@@ -44,8 +47,10 @@ airmass_lauder02 = ncread('lauder02.nc','airmass');
 altitude_lauder02 = ncread('lauder02.nc','zobs');
 xh2o_lauder02 = ncread('lauder02.nc','xh2o');
 xco2_error_lauder02 = ncread('lauder02.nc','xco2_error');
+xco_error_lauder02 = ncread('lauder02.nc','xco_error');
 
 xco2_lauder03 = ncread('lauder03.nc', 'xco2');
+xco_lauder03 = ncread('lauder03.nc', 'xco');
 solzen_lauder03 = ncread('lauder03.nc', 'solzen');
 year_lauder03 = ncread('lauder03.nc', 'year');
 day_lauder03 = ncread('lauder03.nc', 'day');
@@ -66,8 +71,10 @@ airmass_lauder03 = ncread('lauder03.nc','airmass');
 altitude_lauder03 = ncread('lauder03.nc','zobs');
 xh2o_lauder03 = ncread('lauder03.nc','xh2o');
 xco2_error_lauder03 = ncread('lauder03.nc','xco2_error');
+xco_error_lauder03 = ncread('lauder03.nc','xco_error');
 
 Lauder.xco2 = cat(1, xco2_lauder01, xco2_lauder02, xco2_lauder03);
+Lauder.xco = cat(1, xco_lauder01, xco_lauder02, xco_lauder03);
 Lauder.solzen = cat(1, solzen_lauder01, solzen_lauder02, solzen_lauder03);
 Lauder.year = cat(1, year_lauder01, year_lauder02, year_lauder03);
 Lauder.day = cat(1, day_lauder01, day_lauder02, day_lauder03);
@@ -85,5 +92,6 @@ Lauder.airmass = cat(1,airmass_lauder01,airmass_lauder02,airmass_lauder03);
 Lauder.altitude = cat(1,altitude_lauder01,altitude_lauder02,altitude_lauder03);
 Lauder.xh2o = cat(1,xh2o_lauder01,xh2o_lauder02,xh2o_lauder03);
 Lauder.xco2_error = cat(1,xco2_error_lauder01,xco2_error_lauder02,xco2_error_lauder03);
+Lauder.xco_error = cat(1,xco_error_lauder01,xco_error_lauder02,xco_error_lauder03);
 
 save([savepath,'Lauder.mat'],'Lauder','-v7.3')

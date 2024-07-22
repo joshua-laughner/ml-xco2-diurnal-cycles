@@ -75,12 +75,12 @@ end
 if A.make_daily_arrays
 addpath C:\Users\cmarchet\Documents\ML_Code\Data\ %change this to whatever your path with the TCCON data is on
 
-Daily_Struct_ETL = make_daily_array('etl.nc');
-Daily_Struct_Lamont = make_daily_array('lamont.nc');
-Daily_Struct_Lauder = make_daily_array('lauder');
-Daily_Struct_PF = make_daily_array('park_falls.nc');
-Daily_Struct_Iza = make_daily_array('izana.nc');
-Daily_Struct_Nic = make_daily_array('nicosia.nc');
+Daily_Struct_ETL = make_daily_array('etl.nc', -6.0);
+Daily_Struct_Lamont = make_daily_array('lamont.nc', -6.0);
+Daily_Struct_Lauder = make_daily_array('lauder', 12.0);
+Daily_Struct_PF = make_daily_array('park_falls.nc', -6.0);
+Daily_Struct_Iza = make_daily_array('izana.nc', 1.0);
+Daily_Struct_Nic = make_daily_array('nicosia.nc', 2.0);
 
 save([savepath,'Daily_Struct_ETL.mat'],'Daily_Struct_ETL','-v7.3')
 save([savepath,'Daily_Struct_Lamont.mat'],'Daily_Struct_Lamont','-v7.3')
